@@ -58,10 +58,11 @@ namespace RecipeGraph.Components {
         }
 
 
-        public void Apply(int type) {
-            Canvas.ResetTree(type);
+        public void Apply(int type, int childType = 0) {
+            Canvas.ResetTree(type, childType);
             ReAdd(Main.recipe.Where(r => r.createItem.type == type));
         }
+
 
         private void ReAdd(IEnumerable<Recipe> receipes) {
             _craftList.Clear();

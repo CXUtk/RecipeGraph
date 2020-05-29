@@ -43,10 +43,17 @@ namespace RecipeGraph.DataStructures {
             _nodePosition = new Vector2[N];
             _nodes = new OffSpringNode[N];
             for (int i = 0; i < N; i++) _depth[i] = 0;
+            _dfs1(Root);
+        }
+
+        private void _dfs1(OffSpringNode node) {
+            _nodes[node.Type] = node;
+            foreach (var child in node.Children) {
+                _dfs1(child);
+            }
         }
 
         private float _dfs(OffSpringNode node, float offsetX) {
-            _nodes[node.Type] = node;
             if (node.Children.Count == 0)
                 return SlotSize;
             float x = offsetX, totWidth = 0;
@@ -81,6 +88,17 @@ namespace RecipeGraph.DataStructures {
             var width = _dfs(Root, 0);
             _nodePosition[Root.Type] = new Vector2(width / 2, SlotSize);
             return new Vector2(width + SlotSize, _maxY + SlotSize * 2);
+        }
+
+        internal void TryFindPage(int type, int childType) {
+            int i = 0;
+            foreach (var item in _nodes[type].Children) {
+                if (item.Type == childType) {
+                    _nodes[type].Page = i / 10 + 1;
+                    break;
+                }
+                i++;
+            }
         }
 
         private List<UISlotNode> _slots;

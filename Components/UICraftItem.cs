@@ -74,7 +74,7 @@ namespace RecipeGraph.Components {
 
         private void _targetSlot_OnDoubleClick(UIEditor.UILib.Events.UIMouseEvent e, UIEditor.UILib.UIElement sender) {
             var slot = (UIItemSlot)sender;
-            RecipeGraph.Instance.RecipeGraphUI.RecipeGraph.Apply(slot.ItemType);
+            RecipeGraph.Instance.RecipeGraphUI.RecipeGraph.Apply(slot.ItemType, (sender == _targetSlot) ? 0 : _targetSlot.ItemType);
         }
 
         public override void DrawSelf(SpriteBatch sb) {

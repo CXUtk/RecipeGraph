@@ -49,6 +49,7 @@ namespace RecipeGraph.Components {
         }
         private OffSpringTree _offspringTree;
 
+
         internal void ChangePage(int type, int page, Vector2 posScreen) {
             _offspringTree.ChangePage(type, page);
             var size = _offspringTree.Calculate();
@@ -71,8 +72,11 @@ namespace RecipeGraph.Components {
 
         }
 
-        internal void ResetTree(int type) {
+        internal void ResetTree(int type, int childtype = 0) {
             _offspringTree = RecipeGraph.Instance.Graph.FindOffspring(type);
+            Main.NewText(childtype);
+            if (childtype != 0)
+                _offspringTree.TryFindPage(type, childtype);
             var size = _offspringTree.Calculate();
             _treeMap.SizeFactor = new Vector2(0, 0);
             Vector2 realSize = new Vector2(Math.Max(Width, size.X), Math.Max(Height, size.Y));
@@ -81,7 +85,20 @@ namespace RecipeGraph.Components {
             _treeMap.Pivot = new Vector2(0.5f, 0f);
             _treeMap.Position = new Vector2(0, 0);
             _treeMap.Children.Clear();
-            _treeMap.AddNodes(_offspringTree.GetSlots());
+            var slots = _offspringTree.GetSlots();
+            UISlotNode targetnode = null;
+            if (childtype != 0) {
+                foreach (var slot in slots) {
+                    if (slot.Slot.ItemType == childtype) {
+                        targetnode = slot;
+                        break;
+                    }
+                }
+            }
+            _treeMap.AddNodes(slots);
+            if (targetnode != null) {
+                targetnode.MouseLeftClick(new UIMouseEvent(this, new TimeSpan(), new Vector2()));
+            }
             _scale = 0;
             float s = (float)Math.Exp(_scale);
             _treeMap.Scale = new Vector2(s, s);
