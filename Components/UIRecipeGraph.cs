@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using RecipeGraph.DataStructures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,9 +56,10 @@ namespace RecipeGraph.Components {
             panel.AppendChild(_craftList);
 
         }
+
+
         public void Apply(int type) {
-            var tree = RecipeGraph.Instance.Graph.FindOffspring(type);
-            Canvas.ResetTree(tree);
+            Canvas.ResetTree(type);
             ReAdd(Main.recipe.Where(r => r.createItem.type == type));
         }
 

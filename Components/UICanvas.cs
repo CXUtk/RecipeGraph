@@ -47,9 +47,33 @@ namespace RecipeGraph.Components {
             };
             AppendChild(_treeMap);
         }
+        private OffSpringTree _offspringTree;
 
-        internal void ResetTree(OffSpringTree tree) {
-            var size = tree.CalculateSize();
+        internal void ChangePage(int type, int page, Vector2 posScreen) {
+            _offspringTree.ChangePage(type, page);
+            var size = _offspringTree.Calculate();
+            _treeMap.SizeFactor = new Vector2(0, 0);
+            Vector2 realSize = new Vector2(Math.Max(Width, size.X), Math.Max(Height, size.Y));
+            _treeMap.Size = realSize;
+            _treeMap.AnchorPoint = new Vector2(0.5f, 0f);
+            _treeMap.Pivot = new Vector2(0.5f, 0f);
+
+            _treeMap.Children.Clear();
+            var slots = _offspringTree.GetSlots();
+            foreach (var slot in slots) {
+                if (slot.Slot.ItemType == type) {
+                    _treeMap.Pivot = new Vector2(slot.Position.X / realSize.X, slot.Position.Y / realSize.Y);
+                    break;
+                }
+            }
+            _treeMap.AddNodes(slots);
+            _treeMap.Position = _treeMap.ScreenPositionToParentAR(posScreen);
+
+        }
+
+        internal void ResetTree(int type) {
+            _offspringTree = RecipeGraph.Instance.Graph.FindOffspring(type);
+            var size = _offspringTree.Calculate();
             _treeMap.SizeFactor = new Vector2(0, 0);
             Vector2 realSize = new Vector2(Math.Max(Width, size.X), Math.Max(Height, size.Y));
             _treeMap.Size = realSize;
@@ -57,7 +81,7 @@ namespace RecipeGraph.Components {
             _treeMap.Pivot = new Vector2(0.5f, 0f);
             _treeMap.Position = new Vector2(0, 0);
             _treeMap.Children.Clear();
-            _treeMap.AddNodes(tree.GetSlots());
+            _treeMap.AddNodes(_offspringTree.GetSlots());
             _scale = 0;
             float s = (float)Math.Exp(_scale);
             _treeMap.Scale = new Vector2(s, s);

@@ -11,9 +11,12 @@ namespace RecipeGraph.DataStructures {
     internal class OffSpringNode {
         public int Type { get; }
         public List<OffSpringNode> Children { get; }
+        public int Page { get; set; }
+        public int MaxPage { get { return (Children.Count + OffSpringTree.MAX_CHILDREN_DISPLAY - 1) / OffSpringTree.MAX_CHILDREN_DISPLAY; } }
         public OffSpringNode(int type) {
             Type = type;
             Children = new List<OffSpringNode>();
+            Page = 1;
         }
     }
     internal struct TreeSize {
@@ -21,88 +24,80 @@ namespace RecipeGraph.DataStructures {
         public int size;
     };
     internal class OffSpringTree {
-        private int MAXNODES = 10;
+        public const int MAX_CHILDREN_DISPLAY = 10;
         public OffSpringNode Root { get; }
         public float SlotSize { get; set; }
         public float MarginH { get; set; }
         public float VerticalDistance { get; set; }
         private int[] _depth;
-        private TreeSize[] _treeSizes;
         private float _maxY;
         private Vector2[] _nodePosition;
+        private OffSpringNode[] _nodes;
         public OffSpringTree(OffSpringNode root) {
             int N = Main.itemTexture.Length;
             Root = root;
             SlotSize = 52f;
-            MarginH = 1f;
+            MarginH = 15f;
             VerticalDistance = 30f;
             _depth = new int[N];
-            _treeSizes = new TreeSize[N];
             _nodePosition = new Vector2[N];
+            _nodes = new OffSpringNode[N];
             for (int i = 0; i < N; i++) _depth[i] = 0;
         }
 
-        private void _dfs(OffSpringNode node) {
-            TreeSize treeSize = new TreeSize {
-                size = 1,
-                Width = 0
-            };
-            if (node.Children.Count == 0) {
-                treeSize.Width = SlotSize;
-                _treeSizes[node.Type] = treeSize;
-                return;
-            }
-            int i = 0;
-            foreach (var child in node.Children) {
-                if (i == MAXNODES) break;
+        private float _dfs(OffSpringNode node, float offsetX) {
+            _nodes[node.Type] = node;
+            if (node.Children.Count == 0)
+                return SlotSize;
+            float x = offsetX, totWidth = 0;
+            for (int i = (node.Page - 1) * 10; i < node.Children.Count && i < node.Page * 10; i++) {
+                var child = node.Children[i];
                 _depth[child.Type] = _depth[node.Type] + 1;
-                _dfs(child);
-                var csize = _treeSizes[child.Type];
-                treeSize.size += csize.size;
-                treeSize.Width += MarginH + csize.Width;
-                i++;
+                _maxY = Math.Max(_maxY, (_depth[child.Type] + 1) * (SlotSize + VerticalDistance));
+                var width = _dfs(child, x);
+                _nodePosition[child.Type] = new Vector2((2 * x + width) / 2, (_depth[child.Type] + 1) * (SlotSize + VerticalDistance));
+                x += MarginH + width;
+                totWidth += MarginH + width;
             }
-            _treeSizes[node.Type] = treeSize;
+            totWidth -= MarginH;
+            return totWidth;
+        }
+        internal void ChangePage(int type, int page) {
+            _nodes[type].Page = page;
+            _dfs(Root, 0);
         }
 
+        //private void _calculate(OffSpringNode node, float offsetX) {
+        //    float x = offsetX;
+        //    foreach (var child in node.Children) {
+        //        _nodePosition[child.Type] = new Vector2((2 * x + _treeSizes[child.Type].Width) / 2, (_depth[child.Type] + 1) * (SlotSize + VerticalDistance));
+        //        _maxY = Math.Max(_maxY, _nodePosition[child.Type].Y);
+        //        _calculate(child, x);
+        //        x += MarginH + _treeSizes[child.Type].Width;
+        //    }
+        //}
 
-        private void _calculate(OffSpringNode node, float offsetX) {
-            float x = offsetX;
-            int i = 0;
-            foreach (var child in node.Children) {
-                if (i == MAXNODES) break;
-                _nodePosition[child.Type] = new Vector2((2 * x + _treeSizes[child.Type].Width) / 2, (_depth[child.Type] + 1) * (SlotSize + VerticalDistance));
-                _maxY = Math.Max(_maxY, _nodePosition[child.Type].Y);
-                _calculate(child, x);
-                x += MarginH + _treeSizes[child.Type].Width;
-                i++;
-            }
-        }
-
-        public Vector2 CalculateSize() {
-            _maxY = 0;
-            _dfs(Root);
-            _calculate(Root, 0);
-            _nodePosition[Root.Type] = new Vector2(_treeSizes[Root.Type].Width / 2, SlotSize);
-            return new Vector2(_treeSizes[Root.Type].Width + SlotSize, _maxY + SlotSize * 2);
+        public Vector2 Calculate() {
+            var width = _dfs(Root, 0);
+            _nodePosition[Root.Type] = new Vector2(width / 2, SlotSize);
+            return new Vector2(width + SlotSize, _maxY + SlotSize * 2);
         }
 
         private List<UISlotNode> _slots;
 
         private UISlotNode _dfs_slots(OffSpringNode node, UISlotNode parent) {
-            var target = new UISlotNode(node.Type, parent) {
+            var target = new UISlotNode(node.Type, parent, node.Page, node.MaxPage) {
                 AnchorPoint = new Vector2(0, 0),
                 Pivot = new Vector2(0.5f, 0.5f),
                 Size = new Vector2(SlotSize, SlotSize),
                 Position = _nodePosition[node.Type],
             };
             _slots.Add(target);
-            int i = 0;
-            foreach (var child in node.Children) {
-                if (i == MAXNODES) break;
+            target.SlotChildren.Clear();
+            for (int i = (node.Page - 1) * 10; i < node.Children.Count && i < node.Page * 10; i++) {
+                var child = node.Children[i];
                 var c = _dfs_slots(child, target);
                 target.SlotChildren.Add(c);
-                i++;
             }
             return target;
         }

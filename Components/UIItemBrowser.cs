@@ -80,7 +80,6 @@ namespace RecipeGraph.Components {
                     ItemType = i,
                     Pivot = new Vector2(0, 0),
                     Size = new Vector2(52, 52),
-                    Enabled = true,
                 };
                 p.OnClick += P_OnClick;
                 ItemGrid.AddElement(p);
@@ -125,7 +124,6 @@ namespace RecipeGraph.Components {
                         ItemType = i,
                         Pivot = new Vector2(0, 0),
                         Size = new Vector2(52, 52),
-                        Enabled = true,
                     };
                     p.OnClick += P_OnClick;
                     ItemGrid.AddElement(p);
@@ -139,7 +137,6 @@ namespace RecipeGraph.Components {
                         ItemType = i,
                         Pivot = new Vector2(0, 0),
                         Size = new Vector2(52, 52),
-                        Enabled = true,
                     };
                     p.OnClick += P_OnClick;
                     ItemGrid.AddElement(p);

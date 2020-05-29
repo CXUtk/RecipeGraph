@@ -31,12 +31,25 @@ namespace RecipeGraph.Components {
                 _nodes.Add(slot);
                 slot.Slot.OnDoubleClick += Slot_OnDoubleClick;
                 slot.OnClick += Slot_OnClick;
+                slot.OnNextPage += Slot_OnNextPage;
+                slot.OnPrevPage += Slot_OnPrevPage;
                 slot.Parent = this;
-                slot.Slot.PropagationRule |= PropagationFlags.MouseLeftEvents;
+                slot.Slot.PropagationRule |= PropagationFlags.MouseLeftEvents | PropagationFlags.MouseRightEvents;
                 slot.Recalculate();
             }
         }
 
+        private void Slot_OnPrevPage(UIEditor.UILib.Events.UIMouseEvent e, UIElement sender) {
+            UISlotNode slot = (UISlotNode)sender;
+            var rect = slot.AdjustedRectangleScreen;
+            MainState.RecipeGraph.Canvas.ChangePage(slot.Slot.ItemType, slot.Page - 1, rect.TopLeft() + rect.Size() * slot.Pivot);
+        }
+
+        private void Slot_OnNextPage(UIEditor.UILib.Events.UIMouseEvent e, UIElement sender) {
+            UISlotNode slot = (UISlotNode)sender;
+            var rect = slot.AdjustedRectangleScreen;
+            MainState.RecipeGraph.Canvas.ChangePage(slot.Slot.ItemType, slot.Page + 1, rect.TopLeft() + rect.Size() * slot.Pivot);
+        }
 
         private void _removeTag(UISlotNode node) {
             while (node != null) {
@@ -82,6 +95,7 @@ namespace RecipeGraph.Components {
         }
 
         private static Color PathColor = Color.Red;
+        private const float LineWidth = 4f;
 
         private void _dfsDraw(SpriteBatch sb, UISlotNode node) {
             if (node.SlotChildren.Count == 0) return;
@@ -92,26 +106,27 @@ namespace RecipeGraph.Components {
 
             if (node.SlotChildren.Count > 1) {
                 sb.Draw(tex, node.Position,
-                    null, Color.White, 0f, new Vector2(0.5f, 0f), new Vector2(3, Ydis), SpriteEffects.None, 0f);
+                    null, Color.White, 0f, new Vector2(0.5f, 0f), new Vector2(LineWidth, Ydis), SpriteEffects.None, 0f);
                 var last = node.SlotChildren.LastOrDefault();
-                sb.Draw(tex, new Vector2(first.Position.X, first.Position.Y - Ydis),
-                    null, Color.White, 0f, new Vector2(0f, 0.5f), new Vector2(last.Position.X - first.Position.X, 3), SpriteEffects.None, 0f);
+                sb.Draw(tex, new Vector2(first.Position.X - LineWidth / 2, first.Position.Y - Ydis),
+                    null, Color.White, 0f, new Vector2(0f, 0.5f), new Vector2(last.Position.X - first.Position.X + LineWidth, LineWidth), SpriteEffects.None, 0f);
                 foreach (var child in node.SlotChildren) {
 
                     //Vector2 dif = child.Position - node.Position;
                     sb.Draw(tex, new Vector2(child.Position.X, child.Position.Y - Ydis),
-                        null, Color.White, 0f, new Vector2(0.5f, 0f), new Vector2(3, Ydis), SpriteEffects.None, 0f);
+                        null, Color.White, 0f, new Vector2(0.5f, 0f), new Vector2(LineWidth, Ydis), SpriteEffects.None, 0f);
                     // sb.Draw(Main.magicPixel, node.Position, new Rectangle(0, 0, 1, 1), Color.White, dif.ToRotation(), new Vector2(0, 0.5f), new Vector2(dif.Length(), 2f), SpriteEffects.None, 0f);
                     _dfsDraw(sb, child);
                 }
                 foreach (var child in node.SlotChildren) {
                     if (flag && child.InPath) {
+                        int s = child.Position.X < node.Position.X ? -1 : 1;
                         sb.Draw(tex, node.Position,
-                            null, PathColor, 0f, new Vector2(0.5f, 0f), new Vector2(3, Ydis), SpriteEffects.None, 0f);
-                        sb.Draw(tex, new Vector2(node.Position.X, first.Position.Y - Ydis),
-                            null, PathColor, 0f, new Vector2(0f, 0.5f), new Vector2(child.Position.X - node.Position.X, 3), SpriteEffects.None, 0f);
+                            null, PathColor, 0f, new Vector2(0.5f, 0f), new Vector2(LineWidth, Ydis), SpriteEffects.None, 0f);
+                        sb.Draw(tex, new Vector2(node.Position.X - LineWidth / 2 * s, first.Position.Y - Ydis),
+                            null, PathColor, 0f, new Vector2(0f, 0.5f), new Vector2(child.Position.X - node.Position.X + LineWidth * s, LineWidth), SpriteEffects.None, 0f);
                         sb.Draw(tex, new Vector2(child.Position.X, child.Position.Y - Ydis),
-                            null, PathColor, 0f, new Vector2(0.5f, 0f), new Vector2(3, Ydis), SpriteEffects.None, 0f);
+                            null, PathColor, 0f, new Vector2(0.5f, 0f), new Vector2(LineWidth, Ydis), SpriteEffects.None, 0f);
                         break;
                     }
                 }
